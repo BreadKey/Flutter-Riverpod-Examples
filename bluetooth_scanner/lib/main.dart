@@ -70,24 +70,24 @@ class ScanPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isScanning = ref.watch(scannerProvider);
-
-    if (isScanning) {
-      ref.refresh(scanResultsProvier);
-    }
+    final enabled = ref.watch(scannerProvider.select((state) => state.enabled));
+    final isScanning =
+        ref.watch(scannerProvider.select((state) => state.isScanning));
 
     return Scaffold(
       appBar: AppBar(
         actions: [
           TextButton(
-              onPressed: () async {
-                final scanner = ref.read(scannerProvider.notifier);
-                if (isScanning) {
-                  return scanner.stopScan();
-                } else {
-                  return scanner.startScan();
-                }
-              },
+              onPressed: enabled
+                  ? () async {
+                      final scanner = ref.read(scannerProvider.notifier);
+                      if (isScanning) {
+                        return scanner.stopScan();
+                      } else {
+                        return scanner.startScan();
+                      }
+                    }
+                  : null,
               child: Text(isScanning ? "Stop Scan" : "Start Scan"))
         ],
       ),
@@ -101,7 +101,8 @@ class ScanResultListView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final results = ref.watch(scanResultsProvier);
+    final results =
+        ref.watch(scannerProvider.select((state) => state.scanResults));
 
     return ListView.builder(
       itemBuilder: (context, index) {

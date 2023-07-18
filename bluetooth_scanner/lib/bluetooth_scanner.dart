@@ -3,12 +3,16 @@ import 'dart:io';
 
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+part 'bluetooth_scanner.freezed.dart';
 
 final _flutterBlue = FlutterBluePlus.instance;
 
-final scannerProvider = StateNotifierProvider<BluetoothScanner, bool>((ref) {
-  return BluetoothScanner(_flutterBlue.isScanningNow);
+final scannerProvider =
+    StateNotifierProvider<BluetoothScanner, BluetoothScannerState>((ref) {
+  return BluetoothScanner();
 });
 
 final permissionProvier = FutureProvider((ref) async {
@@ -25,48 +29,47 @@ final permissionProvier = FutureProvider((ref) async {
   }
 });
 
-final scanResultsProvier =
-    StateNotifierProvider<ScanResults, List<ScanResult>>((ref) {
-  return ScanResults(const []);
-});
+@freezed
+class BluetoothScannerState with _$BluetoothScannerState {
+  const factory BluetoothScannerState(
+      {@Default(false) bool enabled,
+      @Default(false) bool isScanning,
+      @Default([]) List<ScanResult> scanResults}) = _BluetoothScannerState;
+}
 
-class BluetoothScanner extends StateNotifier<bool> {
-  late final StreamSubscription _isScanningSubscription;
-  BluetoothScanner(super.state) {
-    _isScanningSubscription = _flutterBlue.isScanning.listen((event) {
-      state = event;
-    });
+class BluetoothScanner extends StateNotifier<BluetoothScannerState> {
+  final _bluetoothSubscriptions = <StreamSubscription>[];
+  final _resultCache = <String, ScanResult>{};
+
+  BluetoothScanner() : super(const BluetoothScannerState()) {
+    _bluetoothSubscriptions.add(_flutterBlue.isScanning.listen((event) {
+      state = state.copyWith(
+          isScanning: event, scanResults: event ? [] : state.scanResults);
+    }));
+    _bluetoothSubscriptions.add(_flutterBlue.state.listen((event) {
+      state = state.copyWith(enabled: event == BluetoothState.on);
+    }));
+    _bluetoothSubscriptions.add(_flutterBlue.scanResults.listen((event) {
+      for (final result in event) {
+        if (_resultCache[result.device.id.id] == null) {
+          _resultCache[result.device.id.id] = result;
+          state = state.copyWith(
+              scanResults: List.from(_resultCache.values, growable: false));
+        }
+      }
+    }));
   }
 
   @override
   void dispose() {
-    _isScanningSubscription.cancel();
+    for (final subscription in _bluetoothSubscriptions) {
+      subscription.cancel();
+    }
+    _resultCache.clear();
     super.dispose();
   }
 
   Future startScan({Duration? timeout}) =>
       _flutterBlue.startScan(timeout: timeout);
   Future stopScan() => _flutterBlue.stopScan();
-}
-
-class ScanResults extends StateNotifier<List<ScanResult>> {
-  late final StreamSubscription _scanResultsSubscription;
-  final _map = <String, ScanResult>{};
-
-  ScanResults(super.state) {
-    _scanResultsSubscription = _flutterBlue.scanResults.listen((results) {
-      for (final result in results) {
-        if (_map[result.device.id.id] == null) {
-          _map[result.device.id.id] = result;
-          state = _map.values.toList(growable: false);
-        }
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _scanResultsSubscription.cancel();
-    super.dispose();
-  }
 }
