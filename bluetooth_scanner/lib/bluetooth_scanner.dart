@@ -46,8 +46,8 @@ class BluetoothScanner extends StateNotifier<BluetoothScannerState> {
       state = state.copyWith(
           isScanning: event, scanResults: event ? [] : state.scanResults);
     }));
-    _bluetoothSubscriptions.add(_flutterBlue.state.listen((event) {
-      state = state.copyWith(enabled: event == BluetoothState.on);
+    _bluetoothSubscriptions.add(_flutterBlue.adapterState.listen((event) {
+      state = state.copyWith(enabled: event == BluetoothAdapterState.on);
     }));
     _bluetoothSubscriptions.add(_flutterBlue.scanResults.listen((event) {
       for (final result in event) {
