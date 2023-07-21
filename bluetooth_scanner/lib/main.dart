@@ -43,7 +43,7 @@ class MyHomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final permission = ref.watch(permissionProvier);
+    final permission = ref.watch(isBluetoothAvailableProvider);
     return Material(
       child: permission.when(
           data: (_) {
@@ -53,7 +53,7 @@ class MyHomePage extends ConsumerWidget {
             return Center(
               child: ElevatedButton(
                   onPressed: () {
-                    ref.refresh(permissionProvier);
+                    ref.refresh(isBluetoothAvailableProvider);
                   },
                   child: Text("Retry permission")),
             );
@@ -70,9 +70,9 @@ class ScanPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final enabled = ref.watch(scannerProvider.select((state) => state.enabled));
+    final enabled = ref.watch(bluetoothScannerProvider.select((state) => state.enabled));
     final isScanning =
-        ref.watch(scannerProvider.select((state) => state.isScanning));
+        ref.watch(bluetoothScannerProvider.select((state) => state.isScanning));
 
     return Scaffold(
       appBar: AppBar(
@@ -80,7 +80,7 @@ class ScanPage extends ConsumerWidget {
           TextButton(
               onPressed: enabled
                   ? () async {
-                      final scanner = ref.read(scannerProvider.notifier);
+                      final scanner = ref.read(bluetoothScannerProvider.notifier);
                       if (isScanning) {
                         return scanner.stopScan();
                       } else {
@@ -102,16 +102,16 @@ class ScanResultListView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final results =
-        ref.watch(scannerProvider.select((state) => state.scanResults));
+        ref.watch(bluetoothScannerProvider.select((state) => state.scanResults));
 
     return ListView.builder(
       itemBuilder: (context, index) {
         final result = results[index];
         return Card(
-            key: ValueKey(result.device.id.id),
+            key: ValueKey(result.device.remoteId.str),
             child: ListTile(
-              title: Text(result.device.id.id),
-              subtitle: Text(result.device.name),
+              title: Text(result.device.remoteId.str),
+              subtitle: Text(result.device.localName),
               trailing: Text("${result.rssi}"),
             ));
       },

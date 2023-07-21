@@ -5,17 +5,15 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'bluetooth_scanner.freezed.dart';
+part 'bluetooth_scanner.g.dart';
 
 final _flutterBlue = FlutterBluePlus.instance;
 
-final scannerProvider =
-    StateNotifierProvider<BluetoothScanner, BluetoothScannerState>((ref) {
-  return BluetoothScanner();
-});
-
-final permissionProvier = FutureProvider((ref) async {
+@riverpod
+Future<bool> isBluetoothAvailable(IsBluetoothAvailableRef ref) async {
   final permissions = Platform.isAndroid
       ? [Permission.bluetoothConnect, Permission.bluetoothScan]
       : [Permission.bluetooth];
@@ -24,10 +22,12 @@ final permissionProvier = FutureProvider((ref) async {
 
   for (final result in results.entries) {
     if (result.value != PermissionStatus.granted) {
-      throw Exception("${result.key} permission denied");
+      return false;
     }
   }
-});
+
+  return true;
+}
 
 @freezed
 class BluetoothScannerState with _$BluetoothScannerState {
@@ -37,11 +37,12 @@ class BluetoothScannerState with _$BluetoothScannerState {
       @Default([]) List<ScanResult> scanResults}) = _BluetoothScannerState;
 }
 
-class BluetoothScanner extends StateNotifier<BluetoothScannerState> {
+@riverpod
+class BluetoothScanner extends AutoDisposeNotifier<BluetoothScannerState> {
   final _bluetoothSubscriptions = <StreamSubscription>[];
   final _resultCache = <String, ScanResult>{};
 
-  BluetoothScanner() : super(const BluetoothScannerState()) {
+  BluetoothScanner() {
     _bluetoothSubscriptions.add(_flutterBlue.isScanning.listen((event) {
       state = state.copyWith(
           isScanning: event, scanResults: event ? [] : state.scanResults);
@@ -51,8 +52,8 @@ class BluetoothScanner extends StateNotifier<BluetoothScannerState> {
     }));
     _bluetoothSubscriptions.add(_flutterBlue.scanResults.listen((event) {
       for (final result in event) {
-        if (_resultCache[result.device.id.id] == null) {
-          _resultCache[result.device.id.id] = result;
+        if (_resultCache[result.device.remoteId.str] == null) {
+          _resultCache[result.device.remoteId.str] = result;
           state = state.copyWith(
               scanResults: List.from(_resultCache.values, growable: false));
         }
@@ -61,12 +62,14 @@ class BluetoothScanner extends StateNotifier<BluetoothScannerState> {
   }
 
   @override
-  void dispose() {
-    for (final subscription in _bluetoothSubscriptions) {
-      subscription.cancel();
-    }
-    _resultCache.clear();
-    super.dispose();
+  BluetoothScannerState build() {
+    ref.onDispose(() {
+      for (final subscription in _bluetoothSubscriptions) {
+        subscription.cancel();
+      }
+      _resultCache.clear();
+    });
+    return const BluetoothScannerState();
   }
 
   Future startScan({Duration? timeout}) =>
