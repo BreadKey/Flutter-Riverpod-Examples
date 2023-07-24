@@ -33,34 +33,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(),
-    );
-  }
-}
-
-class MyHomePage extends ConsumerWidget {
-  const MyHomePage({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final permission = ref.watch(isBluetoothAvailableProvider);
-    return Material(
-      child: permission.when(
-          data: (_) {
-            return const ScanPage();
-          },
-          error: (e, stackTrace) {
-            return Center(
-              child: ElevatedButton(
-                  onPressed: () {
-                    ref.refresh(isBluetoothAvailableProvider);
-                  },
-                  child: Text("Retry permission")),
-            );
-          },
-          loading: () => const Center(
-                child: CircularProgressIndicator(),
-              )),
+      home: const ScanPage(),
     );
   }
 }
@@ -70,7 +43,8 @@ class ScanPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final enabled = ref.watch(bluetoothScannerProvider.select((state) => state.enabled));
+    final enabled =
+        ref.watch(bluetoothScannerProvider.select((state) => state.enabled));
     final isScanning =
         ref.watch(bluetoothScannerProvider.select((state) => state.isScanning));
 
@@ -80,7 +54,8 @@ class ScanPage extends ConsumerWidget {
           TextButton(
               onPressed: enabled
                   ? () async {
-                      final scanner = ref.read(bluetoothScannerProvider.notifier);
+                      final scanner =
+                          ref.read(bluetoothScannerProvider.notifier);
                       if (isScanning) {
                         return scanner.stopScan();
                       } else {
@@ -91,7 +66,14 @@ class ScanPage extends ConsumerWidget {
               child: Text(isScanning ? "Stop Scan" : "Start Scan"))
         ],
       ),
-      body: const ScanResultListView(),
+      body: !enabled
+          ? Center(
+              child: Text(
+                "Please turn on Bluetooth!",
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            )
+          : const ScanResultListView(),
     );
   }
 }
@@ -101,8 +83,8 @@ class ScanResultListView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final results =
-        ref.watch(bluetoothScannerProvider.select((state) => state.scanResults));
+    final results = ref
+        .watch(bluetoothScannerProvider.select((state) => state.scanResults));
 
     return ListView.builder(
       itemBuilder: (context, index) {

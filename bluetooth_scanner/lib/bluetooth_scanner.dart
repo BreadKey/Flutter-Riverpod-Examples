@@ -1,33 +1,13 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'bluetooth_scanner.freezed.dart';
 part 'bluetooth_scanner.g.dart';
 
 final _flutterBlue = FlutterBluePlus.instance;
-
-@riverpod
-Future<bool> isBluetoothAvailable(IsBluetoothAvailableRef ref) async {
-  final permissions = Platform.isAndroid
-      ? [Permission.bluetoothConnect, Permission.bluetoothScan]
-      : [Permission.bluetooth];
-
-  final results = await permissions.request();
-
-  for (final result in results.entries) {
-    if (result.value != PermissionStatus.granted) {
-      return false;
-    }
-  }
-
-  return true;
-}
 
 @freezed
 class BluetoothScannerState with _$BluetoothScannerState {
@@ -38,7 +18,7 @@ class BluetoothScannerState with _$BluetoothScannerState {
 }
 
 @riverpod
-class BluetoothScanner extends AutoDisposeNotifier<BluetoothScannerState> {
+class BluetoothScanner extends _$BluetoothScanner {
   final _bluetoothSubscriptions = <StreamSubscription>[];
   final _resultCache = <String, ScanResult>{};
 

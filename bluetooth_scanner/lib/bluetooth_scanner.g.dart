@@ -6,22 +6,6 @@ part of 'bluetooth_scanner.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$isBluetoothAvailableHash() =>
-    r'772305fb2234359df18ba736bec7b606580a2dba';
-
-/// See also [isBluetoothAvailable].
-@ProviderFor(isBluetoothAvailable)
-final isBluetoothAvailableProvider = AutoDisposeFutureProvider<bool>.internal(
-  isBluetoothAvailable,
-  name: r'isBluetoothAvailableProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$isBluetoothAvailableHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef IsBluetoothAvailableRef = AutoDisposeFutureProviderRef<bool>;
 String _$bluetoothScannerHash() => r'f43f8411a56f495562bda5085bcca7274cbfb843';
 
 /// See also [BluetoothScanner].
