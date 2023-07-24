@@ -35,13 +35,9 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
-  flutter_blue_plus:
-    git:
-      url: git@github.com:BreadKey/flutter_blue_plus.git
-      ref: master
+  flutter_blue_plus: ^1.9.5
 
   flutter_riverpod: ^2.3.6
-  permission_handler: ^10.4.3
   freezed_annotation: ^2.4.1
   riverpod_annotation: ^2.1.1
 
