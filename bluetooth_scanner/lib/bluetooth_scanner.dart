@@ -36,15 +36,20 @@ class BluetoothScanner extends _$BluetoothScanner {
   }
 
   void _listenBluetooth() {
-    _bluetoothSubscriptions.add(FlutterBluePlus.isScanning.listen((event) {
-      state = state.copyWith(
-          isScanning: event, scanResults: event ? [] : state.scanResults);
+    _bluetoothSubscriptions.add(FlutterBluePlus.isScanning.listen((isScanning) {
+      if (isScanning) {
+        _onScanStarted();
+      }
+
+      state = state.copyWith(isScanning: isScanning);
     }));
-    _bluetoothSubscriptions.add(FlutterBluePlus.adapterState.listen((event) {
-      state = state.copyWith(enabled: event == BluetoothAdapterState.on);
+    _bluetoothSubscriptions
+        .add(FlutterBluePlus.adapterState.listen((adapterState) {
+      state = state.copyWith(enabled: adapterState == BluetoothAdapterState.on);
     }));
-    _bluetoothSubscriptions.add(FlutterBluePlus.scanResults.listen((event) {
-      for (final result in event) {
+    _bluetoothSubscriptions
+        .add(FlutterBluePlus.scanResults.listen((scanResults) {
+      for (final result in scanResults) {
         if (_resultCache[result.device.remoteId.str] == null) {
           _resultCache[result.device.remoteId.str] = result;
           state = state.copyWith(
@@ -52,6 +57,12 @@ class BluetoothScanner extends _$BluetoothScanner {
         }
       }
     }));
+  }
+
+  void _onScanStarted() {
+    _resultCache.clear();
+
+    state = state.copyWith(scanResults: const []);
   }
 
   Future startScan({Duration? timeout}) =>
