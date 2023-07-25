@@ -7,8 +7,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'bluetooth_scanner.freezed.dart';
 part 'bluetooth_scanner.g.dart';
 
-final _flutterBlue = FlutterBluePlus.instance;
-
 @freezed
 class BluetoothScannerState with _$BluetoothScannerState {
   const factory BluetoothScannerState(
@@ -23,14 +21,14 @@ class BluetoothScanner extends _$BluetoothScanner {
   final _resultCache = <String, ScanResult>{};
 
   BluetoothScanner() {
-    _bluetoothSubscriptions.add(_flutterBlue.isScanning.listen((event) {
+    _bluetoothSubscriptions.add(FlutterBluePlus.isScanning.listen((event) {
       state = state.copyWith(
           isScanning: event, scanResults: event ? [] : state.scanResults);
     }));
-    _bluetoothSubscriptions.add(_flutterBlue.adapterState.listen((event) {
+    _bluetoothSubscriptions.add(FlutterBluePlus.adapterState.listen((event) {
       state = state.copyWith(enabled: event == BluetoothAdapterState.on);
     }));
-    _bluetoothSubscriptions.add(_flutterBlue.scanResults.listen((event) {
+    _bluetoothSubscriptions.add(FlutterBluePlus.scanResults.listen((event) {
       for (final result in event) {
         if (_resultCache[result.device.remoteId.str] == null) {
           _resultCache[result.device.remoteId.str] = result;
@@ -53,6 +51,6 @@ class BluetoothScanner extends _$BluetoothScanner {
   }
 
   Future startScan({Duration? timeout}) =>
-      _flutterBlue.startScan(timeout: timeout);
-  Future stopScan() => _flutterBlue.stopScan();
+      FlutterBluePlus.startScan(timeout: timeout);
+  Future stopScan() => FlutterBluePlus.stopScan();
 }
