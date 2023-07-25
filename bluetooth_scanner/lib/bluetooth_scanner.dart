@@ -20,7 +20,22 @@ class BluetoothScanner extends _$BluetoothScanner {
   final _bluetoothSubscriptions = <StreamSubscription>[];
   final _resultCache = <String, ScanResult>{};
 
-  BluetoothScanner() {
+  BluetoothScanner();
+
+  @override
+  BluetoothScannerState build() {
+    _listenBluetooth();
+    ref.onDispose(() {
+      for (final subscription in _bluetoothSubscriptions) {
+        subscription.cancel();
+      }
+      _bluetoothSubscriptions.clear();
+      _resultCache.clear();
+    });
+    return const BluetoothScannerState();
+  }
+
+  void _listenBluetooth() {
     _bluetoothSubscriptions.add(FlutterBluePlus.isScanning.listen((event) {
       state = state.copyWith(
           isScanning: event, scanResults: event ? [] : state.scanResults);
@@ -37,17 +52,6 @@ class BluetoothScanner extends _$BluetoothScanner {
         }
       }
     }));
-  }
-
-  @override
-  BluetoothScannerState build() {
-    ref.onDispose(() {
-      for (final subscription in _bluetoothSubscriptions) {
-        subscription.cancel();
-      }
-      _resultCache.clear();
-    });
-    return const BluetoothScannerState();
   }
 
   Future startScan({Duration? timeout}) =>
